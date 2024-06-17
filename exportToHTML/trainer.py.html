@@ -1,0 +1,52 @@
+<html>
+<head>
+<title>trainer.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #6aab73;}
+.s4 { color: #7a7e85;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+trainer.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">os</span>
+<span class="s0">import </span><span class="s1">cv2</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">from </span><span class="s1">PIL </span><span class="s0">import </span><span class="s1">Image</span>
+
+<span class="s1">recognizer</span><span class="s2">=</span><span class="s1">cv2</span><span class="s2">.</span><span class="s1">face</span><span class="s2">.</span><span class="s1">LBPHFaceRecognizer_create</span><span class="s2">()</span>
+<span class="s1">path </span><span class="s2">= </span><span class="s3">&quot;dataset&quot;</span>
+
+
+<span class="s0">def </span><span class="s1">get_images_with_ids</span><span class="s2">(</span><span class="s1">path</span><span class="s2">):</span>
+    <span class="s1">image_paths </span><span class="s2">= [</span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">join</span><span class="s2">(</span><span class="s1">path</span><span class="s2">,</span><span class="s1">f</span><span class="s2">) </span><span class="s0">for </span><span class="s1">f </span><span class="s0">in </span><span class="s1">os</span><span class="s2">.</span><span class="s1">listdir</span><span class="s2">(</span><span class="s1">path</span><span class="s2">)]    </span><span class="s4">#set images path yo os</span>
+    <span class="s1">faces </span><span class="s2">= []</span>
+    <span class="s1">ids </span><span class="s2">= []</span>
+    <span class="s0">for </span><span class="s1">single_image_path </span><span class="s0">in </span><span class="s1">image_paths</span><span class="s2">:</span>
+        <span class="s1">faceImg </span><span class="s2">= </span><span class="s1">Image</span><span class="s2">.</span><span class="s1">open</span><span class="s2">(</span><span class="s1">single_image_path</span><span class="s2">).</span><span class="s1">convert</span><span class="s2">(</span><span class="s3">&quot;L&quot;</span><span class="s2">)  </span><span class="s4"># greyscale luminance</span>
+        <span class="s1">faceNp </span><span class="s2">= </span><span class="s1">np</span><span class="s2">.</span><span class="s1">array</span><span class="s2">(</span><span class="s1">faceImg</span><span class="s2">, </span><span class="s1">np</span><span class="s2">.</span><span class="s1">uint8</span><span class="s2">)</span>
+        <span class="s1">id </span><span class="s2">= </span><span class="s1">int</span><span class="s2">(</span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">split</span><span class="s2">(</span><span class="s1">single_image_path</span><span class="s2">)[-</span><span class="s5">1</span><span class="s2">].</span><span class="s1">split</span><span class="s2">(</span><span class="s3">&quot;.&quot;</span><span class="s2">)[</span><span class="s5">1</span><span class="s2">])</span>
+        <span class="s1">print</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)</span>
+        <span class="s1">faces</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">faceNp</span><span class="s2">)</span>
+        <span class="s1">ids</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)</span>
+        <span class="s1">cv2</span><span class="s2">.</span><span class="s1">imshow</span><span class="s2">(</span><span class="s3">&quot;training&quot;</span><span class="s2">, </span><span class="s1">faceNp</span><span class="s2">)</span>
+        <span class="s1">cv2</span><span class="s2">.</span><span class="s1">waitKey</span><span class="s2">(</span><span class="s5">10</span><span class="s2">)</span>
+
+    <span class="s0">return </span><span class="s1">np</span><span class="s2">.</span><span class="s1">array</span><span class="s2">(</span><span class="s1">ids</span><span class="s2">), </span><span class="s1">faces</span>
+
+<span class="s1">ids</span><span class="s2">, </span><span class="s1">faces </span><span class="s2">= </span><span class="s1">get_images_with_ids</span><span class="s2">(</span><span class="s1">path</span><span class="s2">)</span>
+<span class="s1">recognizer</span><span class="s2">.</span><span class="s1">train</span><span class="s2">(</span><span class="s1">faces</span><span class="s2">, </span><span class="s1">ids</span><span class="s2">)</span>
+<span class="s1">recognizer</span><span class="s2">.</span><span class="s1">save</span><span class="s2">(</span><span class="s3">&quot;Rekognizer/trainingdata.yml&quot;</span><span class="s2">)</span>
+<span class="s1">cv2</span><span class="s2">.</span><span class="s1">destroyAllWindows</span><span class="s2">()</span>
+
+</pre>
+</body>
+</html>

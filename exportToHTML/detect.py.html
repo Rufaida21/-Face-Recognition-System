@@ -1,0 +1,100 @@
+<html>
+<head>
+<title>detect.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #7a7e85;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+detect.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">cv2</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">import </span><span class="s1">os</span>
+<span class="s0">import </span><span class="s1">sqlite3</span>
+
+<span class="s2"># Initialize the face detector and camera</span>
+<span class="s1">facedetect </span><span class="s3">= </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">CascadeClassifier</span><span class="s3">(</span><span class="s4">&quot;haarcascade_frontalface_default.xml&quot;</span><span class="s3">)</span>
+<span class="s1">cam </span><span class="s3">= </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">VideoCapture</span><span class="s3">(</span><span class="s5">0</span><span class="s3">)</span>
+
+<span class="s2"># Check if the camera is opened successfully</span>
+<span class="s0">if not </span><span class="s1">cam</span><span class="s3">.</span><span class="s1">isOpened</span><span class="s3">():</span>
+    <span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;Error: Could not open camera.&quot;</span><span class="s3">)</span>
+    <span class="s1">exit</span><span class="s3">()</span>
+
+<span class="s2"># Initialize the face recognizer</span>
+<span class="s1">recognizer </span><span class="s3">= </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">face</span><span class="s3">.</span><span class="s1">LBPHFaceRecognizer_create</span><span class="s3">()</span>
+
+<span class="s2"># Check if the training data file exists</span>
+<span class="s1">training_data_path </span><span class="s3">= </span><span class="s4">&quot;Rekognizer/trainingdata.yml&quot;</span>
+<span class="s0">if not </span><span class="s1">os</span><span class="s3">.</span><span class="s1">path</span><span class="s3">.</span><span class="s1">exists</span><span class="s3">(</span><span class="s1">training_data_path</span><span class="s3">):</span>
+    <span class="s1">print</span><span class="s3">(</span><span class="s4">f&quot;Error: Training data file not found at </span><span class="s0">{</span><span class="s1">training_data_path</span><span class="s0">}</span><span class="s4">.&quot;</span><span class="s3">)</span>
+    <span class="s1">exit</span><span class="s3">()</span>
+
+<span class="s2"># Read the training data</span>
+<span class="s1">recognizer</span><span class="s3">.</span><span class="s1">read</span><span class="s3">(</span><span class="s1">training_data_path</span><span class="s3">)</span>
+
+
+<span class="s2"># Function to get profile information from the database</span>
+<span class="s0">def </span><span class="s1">getProfile</span><span class="s3">(</span><span class="s1">id</span><span class="s3">):</span>
+    <span class="s1">conn </span><span class="s3">= </span><span class="s1">sqlite3</span><span class="s3">.</span><span class="s1">connect</span><span class="s3">(</span><span class="s4">&quot;sqlite.db&quot;</span><span class="s3">)</span>
+    <span class="s1">cursor </span><span class="s3">= </span><span class="s1">conn</span><span class="s3">.</span><span class="s1">execute</span><span class="s3">(</span><span class="s4">&quot;SELECT * FROM STUDENTS WHERE id=?&quot;</span><span class="s3">, (</span><span class="s1">id</span><span class="s3">,))</span>
+    <span class="s1">profile </span><span class="s3">= </span><span class="s0">None</span>
+    <span class="s0">for </span><span class="s1">row </span><span class="s0">in </span><span class="s1">cursor</span><span class="s3">:</span>
+        <span class="s1">profile </span><span class="s3">= </span><span class="s1">row</span>
+    <span class="s1">conn</span><span class="s3">.</span><span class="s1">close</span><span class="s3">()</span>
+    <span class="s0">return </span><span class="s1">profile</span>
+
+
+<span class="s0">try</span><span class="s3">:</span>
+    <span class="s0">while True</span><span class="s3">:</span>
+        <span class="s2"># Read a frame from the camera</span>
+        <span class="s1">ret</span><span class="s3">, </span><span class="s1">img </span><span class="s3">= </span><span class="s1">cam</span><span class="s3">.</span><span class="s1">read</span><span class="s3">()</span>
+
+        <span class="s2"># Check if the frame is read correctly</span>
+        <span class="s0">if not </span><span class="s1">ret </span><span class="s0">or </span><span class="s1">img </span><span class="s0">is None</span><span class="s3">:</span>
+            <span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;Error: Failed to capture image.&quot;</span><span class="s3">)</span>
+            <span class="s0">continue</span>
+
+        <span class="s2"># Convert the frame to grayscale</span>
+        <span class="s1">gray </span><span class="s3">= </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">cvtColor</span><span class="s3">(</span><span class="s1">img</span><span class="s3">, </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">COLOR_BGR2GRAY</span><span class="s3">)</span>
+
+        <span class="s2"># Detect faces in the grayscale frame</span>
+        <span class="s1">faces </span><span class="s3">= </span><span class="s1">facedetect</span><span class="s3">.</span><span class="s1">detectMultiScale</span><span class="s3">(</span><span class="s1">gray</span><span class="s3">, </span><span class="s5">1.3</span><span class="s3">, </span><span class="s5">5</span><span class="s3">)</span>
+
+        <span class="s0">for </span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">w</span><span class="s3">, </span><span class="s1">h</span><span class="s3">) </span><span class="s0">in </span><span class="s1">faces</span><span class="s3">:</span>
+            <span class="s1">cv2</span><span class="s3">.</span><span class="s1">rectangle</span><span class="s3">(</span><span class="s1">img</span><span class="s3">, (</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">), (</span><span class="s1">x </span><span class="s3">+ </span><span class="s1">w</span><span class="s3">, </span><span class="s1">y </span><span class="s3">+ </span><span class="s1">h</span><span class="s3">), (</span><span class="s5">0</span><span class="s3">, </span><span class="s5">255</span><span class="s3">, </span><span class="s5">0</span><span class="s3">), </span><span class="s5">2</span><span class="s3">)</span>
+            <span class="s1">id</span><span class="s3">, </span><span class="s1">conf </span><span class="s3">= </span><span class="s1">recognizer</span><span class="s3">.</span><span class="s1">predict</span><span class="s3">(</span><span class="s1">gray</span><span class="s3">[</span><span class="s1">y</span><span class="s3">:</span><span class="s1">y </span><span class="s3">+ </span><span class="s1">h</span><span class="s3">, </span><span class="s1">x</span><span class="s3">: </span><span class="s1">x </span><span class="s3">+ </span><span class="s1">w</span><span class="s3">])</span>
+            <span class="s1">profile </span><span class="s3">= </span><span class="s1">getProfile</span><span class="s3">(</span><span class="s1">id</span><span class="s3">)</span>
+            <span class="s1">print</span><span class="s3">(</span><span class="s1">profile</span><span class="s3">)</span>
+            <span class="s0">if </span><span class="s1">profile </span><span class="s0">is not None</span><span class="s3">:</span>
+                <span class="s1">cv2</span><span class="s3">.</span><span class="s1">putText</span><span class="s3">(</span><span class="s1">img</span><span class="s3">, </span><span class="s4">&quot;Name: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">profile</span><span class="s3">[</span><span class="s5">1</span><span class="s3">]), (</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y </span><span class="s3">+ </span><span class="s1">h </span><span class="s3">+ </span><span class="s5">20</span><span class="s3">), </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">FONT_HERSHEY_COMPLEX</span><span class="s3">, </span><span class="s5">1</span><span class="s3">,</span>
+                            <span class="s3">(</span><span class="s5">0</span><span class="s3">, </span><span class="s5">255</span><span class="s3">, </span><span class="s5">127</span><span class="s3">), </span><span class="s5">2</span><span class="s3">)</span>
+                <span class="s1">cv2</span><span class="s3">.</span><span class="s1">putText</span><span class="s3">(</span><span class="s1">img</span><span class="s3">, </span><span class="s4">&quot;Age: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">profile</span><span class="s3">[</span><span class="s5">2</span><span class="s3">]), (</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y </span><span class="s3">+ </span><span class="s1">h </span><span class="s3">+ </span><span class="s5">45</span><span class="s3">), </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">FONT_HERSHEY_COMPLEX</span><span class="s3">, </span><span class="s5">1</span><span class="s3">, (</span><span class="s5">0</span><span class="s3">, </span><span class="s5">255</span><span class="s3">, </span><span class="s5">127</span><span class="s3">),</span>
+                            <span class="s5">2</span><span class="s3">)</span>
+
+        <span class="s2"># Display the frame with detected faces</span>
+        <span class="s1">cv2</span><span class="s3">.</span><span class="s1">imshow</span><span class="s3">(</span><span class="s4">&quot;FACE&quot;</span><span class="s3">, </span><span class="s1">img</span><span class="s3">)</span>
+
+        <span class="s2"># Exit loop if 'q' is pressed</span>
+        <span class="s0">if </span><span class="s1">cv2</span><span class="s3">.</span><span class="s1">waitKey</span><span class="s3">(</span><span class="s5">1</span><span class="s3">) == </span><span class="s1">ord</span><span class="s3">(</span><span class="s4">'q'</span><span class="s3">):</span>
+            <span class="s0">break</span>
+<span class="s0">except </span><span class="s1">KeyboardInterrupt</span><span class="s3">:</span>
+    <span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;</span><span class="s0">\n</span><span class="s4">Program interrupted by user.&quot;</span><span class="s3">)</span>
+<span class="s0">finally</span><span class="s3">:</span>
+    <span class="s2"># Release the camera and close all OpenCV windows</span>
+    <span class="s1">cam</span><span class="s3">.</span><span class="s1">release</span><span class="s3">()</span>
+    <span class="s1">cv2</span><span class="s3">.</span><span class="s1">destroyAllWindows</span><span class="s3">()</span>
+    <span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;Resources released, program terminated.&quot;</span><span class="s3">)</span>
+</pre>
+</body>
+</html>
